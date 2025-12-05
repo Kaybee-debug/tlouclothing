@@ -67,7 +67,7 @@ const Cart = () => {
                     </h3>
                   </Link>
                   <p className="text-sm text-muted-foreground mt-1">
-                    ${item.product.price.toFixed(2)} per yard
+                    R{item.product.price.toFixed(2)} per yard
                   </p>
 
                   {/* Quantity Controls */}
@@ -107,7 +107,7 @@ const Cart = () => {
                 {/* Price */}
                 <div className="text-right">
                   <p className="font-semibold text-primary">
-                    ${(item.product.price * item.quantity).toFixed(2)}
+                    R{(item.product.price * item.quantity).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -126,25 +126,25 @@ const Cart = () => {
                   <span className="text-muted-foreground">
                     Subtotal ({totalItems} items)
                   </span>
-                  <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                  <span className="font-medium">R{totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className="font-medium">
-                    {totalPrice >= 100 ? 'Free' : '$9.99'}
+                    {totalPrice >= 100 ? 'Free' : 'R99.99'}
                   </span>
                 </div>
                 <div className="border-t border-border pt-4 flex justify-between text-base">
                   <span className="font-semibold">Total</span>
                   <span className="font-bold text-primary">
-                    ${(totalPrice + (totalPrice >= 100 ? 0 : 9.99)).toFixed(2)}
+                    R{(totalPrice + (totalPrice >= 100 ? 0 : 99.99)).toFixed(2)}
                   </span>
                 </div>
               </div>
 
               {totalPrice < 100 && (
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Add ${(100 - totalPrice).toFixed(2)} more for free shipping!
+                  Add R{(100 - totalPrice).toFixed(2)} more for free shipping!
                 </p>
               )}
 

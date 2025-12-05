@@ -76,7 +76,7 @@ export function ProductCard({ product, className, index = 0 }: ProductCardProps)
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span className="text-lg font-semibold text-primary">
-            ${product.price.toFixed(2)}
+            R{product.price.toFixed(2)}
           </span>
           <span className="text-xs text-muted-foreground">per yard</span>
         </div>

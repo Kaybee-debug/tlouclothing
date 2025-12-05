@@ -27,7 +27,7 @@ const Checkout = () => {
     cvc: '',
   });
 
-  const shipping = totalPrice >= 100 ? 0 : 9.99;
+  const shipping = totalPrice >= 100 ? 0 : 99.99;
   const total = totalPrice + shipping;
 
   if (items.length === 0) {
@@ -191,7 +191,7 @@ const Checkout = () => {
                 ) : (
                   <>
                     <Lock className="h-4 w-4 mr-2" />
-                    Pay ${total.toFixed(2)}
+                    Pay R{total.toFixed(2)}
                   </>
                 )}
               </Button>
@@ -222,7 +222,7 @@ const Checkout = () => {
                       </p>
                     </div>
                     <p className="font-medium text-sm">
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      R{(item.product.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -231,15 +231,15 @@ const Checkout = () => {
               <div className="mt-6 pt-6 border-t border-border space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>R{totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'Free' : `R${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold pt-3 border-t border-border">
                   <span>Total</span>
-                  <span className="text-primary">${total.toFixed(2)}</span>
+                  <span className="text-primary">R{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
