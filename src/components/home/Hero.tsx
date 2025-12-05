@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import heroBackground from '@/assets/hero-background.jpg';
 
 export function Hero() {
   return (
@@ -8,8 +9,8 @@ export function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1920&h=1080&fit=crop"
-          alt="Fabric textures"
+          src={heroBackground}
+          alt="Fabric manufacturing"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-hero" />

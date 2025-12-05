@@ -67,7 +67,7 @@ const ProductDetail = () => {
               {product.name}
             </h1>
             <p className="mt-4 text-xl text-primary font-semibold">
-              ${product.price.toFixed(2)} <span className="text-sm text-muted-foreground font-normal">per yard</span>
+              R{product.price.toFixed(2)} <span className="text-sm text-muted-foreground font-normal">per yard</span>
             </p>
 
             <p className="mt-6 text-muted-foreground leading-relaxed">
@@ -121,7 +121,7 @@ const ProductDetail = () => {
                 disabled={product.stock === 0}
               >
                 <ShoppingBag className="h-5 w-5 mr-2" />
-                Add to Cart — ${(product.price * quantity).toFixed(2)}
+                Add to Cart — R{(product.price * quantity).toFixed(2)}
               </Button>
             </div>
 

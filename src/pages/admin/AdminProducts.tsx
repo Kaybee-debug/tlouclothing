@@ -145,7 +145,7 @@ const AdminProducts = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
+                    <Label htmlFor="price">Price (R)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -240,7 +240,7 @@ const AdminProducts = () => {
                   </TableCell>
                   <TableCell>{product.category || '-'}</TableCell>
                   <TableCell className="text-right">
-                    ${product.price.toFixed(2)}
+                    R{product.price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <span
