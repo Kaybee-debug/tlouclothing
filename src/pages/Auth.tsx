@@ -52,7 +52,7 @@ const Auth = () => {
       if (success) {
         toast({
           title: isLogin ? "Welcome back!" : "Account created!",
-          description: isLogin ? "You've been logged in." : "Welcome to Artisan Fabrics!",
+          description: isLogin ? "You've been logged in." : "Welcome to Xisekelo Fabrics!",
         });
         navigate(from);
       }

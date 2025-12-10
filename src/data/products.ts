@@ -28,15 +28,7 @@ export const sampleProducts: Product[] = [
     image_url: 'https://images.unsplash.com/photo-1550639525-c97d455acf70?w=600&h=600&fit=crop',
     category: 'Silk',
   },
-  {
-    id: '4',
-    name: 'Merino Wool Tweed',
-    description: 'Classic merino wool tweed with subtle patterns. Excellent for jackets, coats, and traditional tailoring.',
-    price: 54.99,
-    stock: 60,
-    image_url: 'https://images.unsplash.com/photo-1558171013-50af3cdffe5b?w=600&h=600&fit=crop',
-    category: 'Wool',
-  },
+  
   {
     id: '5',
     name: 'Bamboo Jersey',
@@ -55,15 +47,7 @@ export const sampleProducts: Product[] = [
     image_url: 'https://images.unsplash.com/photo-1534126416832-a88fdf2911c2?w=600&h=600&fit=crop',
     category: 'Velvet',
   },
-  {
-    id: '7',
-    name: 'Hemp Denim',
-    description: 'Durable hemp denim blend. Eco-friendly and perfect for sustainable fashion projects.',
-    price: 29.99,
-    stock: 120,
-    image_url: 'https://images.unsplash.com/photo-1582234372722-50d7ccc30ebd?w=600&h=600&fit=crop',
-    category: 'Hemp',
-  },
+
   {
     id: '8',
     name: 'Cashmere Blend',

@@ -22,7 +22,7 @@ const About = () => {
               Our Story
             </h1>
             <p className="mt-6 text-lg text-cream/80">
-              Since 1985, Artisan Fabrics has been the trusted source for premium textiles,
+              Since 1985, Xisekelo Fabrics has been the trusted source for premium textiles,
               serving designers, craftspeople, and manufacturers worldwide.
             </p>
           </div>
@@ -81,7 +81,7 @@ const About = () => {
                 <p>
                   What started as a small family-run fabric shop has grown into one of the
                   most respected textile suppliers in the industry. Our founder, Maria
-                  Vasquez, had a simple vision: to provide artisans with the finest fabrics
+                  Vasquez, had a simple vision: to provide xisekelo with the finest fabrics
                   available, at fair prices.
                 </p>
                 <p>
