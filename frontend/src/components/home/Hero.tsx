@@ -13,20 +13,22 @@ export function Hero() {
           alt="Fabric manufacturing"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-hero" />
+        {/* Elegant Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-100/40 via-white/20 to-white/80" />
       </div>
 
       {/* Content */}
       <div className="container relative z-10">
         <div className="max-w-2xl animate-fade-up">
-          <span className="inline-block px-4 py-1.5 text-sm font-medium text-cream/90 bg-cream/10 rounded-full border border-cream/20 mb-6">
-            Premium Quality Since 1985
-          </span>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-cream leading-tight">
+         <span className="inline-block px-4 py-1.5 text-sm font-medium text-black/80 bg-orange-600 rounded-full border  mb-6">
+  Premium Quality Since 1985
+</span>
+
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-black leading-tight">
             Exquisite Fabrics for{' '}
-            <span className="text-terracotta-light">Extraordinary</span> Creations
+            <span className="text-black-400">Extraordinary</span> Creations
           </h1>
-          <p className="mt-6 text-lg text-cream/80 max-w-lg">
+          <p className="mt-6 text-lg text-black/70 max-w-lg">
             Discover our curated collection of premium textiles. From sustainable cottons 
             to luxurious silks, find the perfect fabric for your next masterpiece.
           </p>
@@ -41,7 +43,7 @@ export function Hero() {
               <Button
                 variant="outline"
                 size="xl"
-                className="border-cream/30 text-cream hover:bg-cream/10 hover:text-cream"
+                className="border-black/30 text-black hover:bg-black/10 hover:text-black"
               >
                 Our Story
               </Button>

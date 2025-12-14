@@ -2,24 +2,24 @@ import { Link } from 'react-router-dom';
 
 const categories = [
   {
-    name: 'Cotton',
-    description: 'Breathable & versatile',
+    name: 'Corporate Uniform',
+    description: 'Warm corporate hoodie suitable for indoor and outdoor work',
     image: 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&h=500&fit=crop',
   },
   {
-    name: 'Linen',
+    name: 'Protective Clothing',
     description: 'Natural elegance',
     image: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400&h=500&fit=crop',
   },
   {
-    name: 'Silk',
+    name: 'Hospitality Wear',
     description: 'Luxurious drape',
     image: 'https://images.unsplash.com/photo-1550639525-c97d455acf70?w=400&h=500&fit=crop',
   },
   {
-    name: 'Wool',
+    name: 'Security Clothing',
     description: 'Warmth & texture',
-    image: 'https://images.unsplash.com/photo-1558171013-50af3cdffe5b?w=400&h=500&fit=crop',
+    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=600&fit=crop'
   },
 ];
 
