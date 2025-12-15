@@ -1,25 +1,19 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-
-const routes = require('./routes/index');
+// server.js
+const express = require("express");
+const cors = require("cors");          // ✅ import cors
+const routes = require("./routes");
+require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Enable CORS for all origins (or restrict to frontend)
+app.use(cors());                       // ✅ enable CORS
+
 app.use(express.json());
 
-// Root route
-app.get('/', (req, res) => {
-  res.send('Welcome to frabricswork.app Backend!');
-});
+app.use("/api", routes);
 
-// API routes
-app.use('/api', routes);
-
-// Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log("Xisekelo Safety backend running on port", PORT);
 });
