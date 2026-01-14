@@ -78,8 +78,39 @@ definePageMeta({
 });
 
 const { toast } = useToast();
-const products = ref<Product[]>(sampleProducts);
+const config = useRuntimeConfig();
+const products = ref<Product[]>([]);
 const search = ref('');
+const loading = ref(true);
+
+// Fetch products from API
+onMounted(async () => {
+  try {
+    const apiUrl = config.public.apiBase || 'http://localhost:3003';
+    const res = await fetch(`${apiUrl}/api/products`);
+    
+    if (res.ok) {
+      const data: Product[] = await res.json();
+      products.value = data.map((p) => ({
+        id: p.id.toString(),
+        name: p.name,
+        description: p.description,
+        price: Number(p.price),
+        stock: p.stock,
+        image_url: p.image_url,
+        category: p.category || 'General',
+      }));
+    } else {
+      // Fallback to sample products
+      products.value = sampleProducts;
+    }
+  } catch (err) {
+    console.error('Failed to fetch products:', err);
+    products.value = sampleProducts;
+  } finally {
+    loading.value = false;
+  }
+});
 
 const filteredProducts = computed(() =>
   products.value.filter(

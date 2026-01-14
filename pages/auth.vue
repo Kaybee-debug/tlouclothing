@@ -41,6 +41,7 @@
               type="email"
               placeholder="you@example.com"
               required
+              autocomplete="email"
             />
           </div>
 
@@ -53,6 +54,7 @@
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="••••••••"
                 required
+                autocomplete="current-password"
               />
               <Button
                 type="button"
@@ -116,23 +118,47 @@ const form = ref({
 const handleSubmit = async () => {
   isLoading.value = true;
 
+  // Validate form
+  if (!form.value.email || !form.value.password) {
+    toast({
+      title: 'Validation Error',
+      description: 'Please fill in all required fields.',
+      variant: 'destructive',
+    });
+    isLoading.value = false;
+    return;
+  }
+
   try {
     let success: boolean;
     if (isLogin.value) {
+      console.log('🔐 Attempting login with:', {
+        email: form.value.email,
+        passwordLength: form.value.password.length
+      });
       success = await login(form.value.email, form.value.password);
       if (!success) {
         toast({
           title: 'Login failed',
-          description: 'Invalid email or password. Try admin@fabric.com / admin123',
+          description: 'Invalid email or password. Please check your credentials.',
           variant: 'destructive',
         });
       }
     } else {
+      if (!form.value.name) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please enter your name.',
+          variant: 'destructive',
+        });
+        isLoading.value = false;
+        return;
+      }
       success = await register(form.value.name, form.value.email, form.value.password);
       if (!success) {
         toast({
           title: 'Registration failed',
-          description: 'This email is already registered.',
+          description: 'Unable to create account. This email may already be registered.',
           variant: 'destructive',
         });
       }
@@ -141,11 +167,19 @@ const handleSubmit = async () => {
     if (success) {
       toast({
         title: isLogin.value ? 'Welcome back!' : 'Account created!',
-        description: isLogin.value ? "You've been logged in." : 'Welcome to Xisekelo Fabrics!',
+        description: isLogin.value ? "You've been logged in." : 'Welcome to Xisekelo Safety!',
       });
-      const from = (route.query.from as string) || '/';
-      navigateTo(from);
+      // Redirect back to the page they came from (e.g., checkout) or home
+      const returnPath = (route.query.from as string) || '/';
+      navigateTo(returnPath);
     }
+  } catch (error) {
+    console.error('Auth error:', error);
+    toast({
+      title: 'Error',
+      description: 'Something went wrong. Please try again.',
+      variant: 'destructive',
+    });
   } finally {
     isLoading.value = false;
   }

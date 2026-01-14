@@ -1,6 +1,6 @@
 <template>
   <div class="relative inline-block text-left">
-    <div @click="toggle">
+    <div @click.stop="toggle" data-dropdown-trigger>
       <slot name="trigger" />
     </div>
     <Transition
@@ -15,8 +15,9 @@
         v-if="isOpen"
         v-click-outside="close"
         class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+        @click.stop
       >
-        <div class="py-1">
+        <div class="py-1" @click.stop>
           <slot />
         </div>
       </div>
@@ -38,14 +39,26 @@ const close = () => {
 const vClickOutside = {
   mounted(el: any, binding: any) {
     el.clickOutsideEvent = (event: MouseEvent) => {
-      if (!(el === event.target || el.contains(event.target))) {
-        binding.value();
+      // Don't close if clicking inside the dropdown
+      if (el.contains(event.target)) {
+        return;
       }
+      // Don't close if clicking the trigger button
+      const trigger = el.parentElement?.querySelector('[data-dropdown-trigger]');
+      if (trigger && (trigger === event.target || trigger.contains(event.target as Node))) {
+        return;
+      }
+      binding.value();
     };
-    document.addEventListener('click', el.clickOutsideEvent);
+    // Use a small delay to prevent immediate closing
+    setTimeout(() => {
+      document.addEventListener('click', el.clickOutsideEvent);
+    }, 100);
   },
   unmounted(el: any) {
-    document.removeEventListener('click', el.clickOutsideEvent);
+    if (el.clickOutsideEvent) {
+      document.removeEventListener('click', el.clickOutsideEvent);
+    }
   },
 };
 </script>

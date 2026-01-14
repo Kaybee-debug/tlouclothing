@@ -34,6 +34,11 @@
                 Shopping Cart
               </NuxtLink>
             </li>
+            <li>
+              <NuxtLink to="/orders" class="text-muted-foreground hover:text-primary transition-colors">
+                My Orders
+              </NuxtLink>
+            </li>
           </ul>
         </div>
 

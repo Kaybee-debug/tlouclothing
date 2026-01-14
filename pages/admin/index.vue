@@ -34,38 +34,93 @@
 
 <script setup lang="ts">
 import { Package, ShoppingCart, DollarSign, TrendingUp } from 'lucide-vue-next';
-import { sampleProducts } from '~/data/products';
 
 definePageMeta({
   middleware: 'admin',
   layout: 'admin',
 });
 
-const stats = [
+const config = useRuntimeConfig();
+const loading = ref(true);
+const stats = ref([
   {
     label: 'Total Products',
-    value: sampleProducts.length,
+    value: '0',
     icon: Package,
-    change: '+2 this week',
+    change: 'Loading...',
   },
   {
     label: 'Total Orders',
-    value: 24,
+    value: '0',
     icon: ShoppingCart,
-    change: '+5 this week',
+    change: 'Loading...',
   },
   {
     label: 'Revenue',
-    value: '$4,589',
+    value: 'R0.00',
     icon: DollarSign,
-    change: '+12% from last month',
+    change: 'Loading...',
   },
   {
-    label: 'Conversion Rate',
-    value: '3.2%',
+    label: 'Orders This Week',
+    value: '0',
     icon: TrendingUp,
-    change: '+0.5% from last month',
+    change: 'Loading...',
   },
-];
-</script>
+]);
 
+onMounted(async () => {
+  try {
+    const apiBase = config.public.apiBase;
+    const token = process.client ? localStorage.getItem('token') : null;
+
+    if (!token) {
+      navigateTo('/auth');
+      return;
+    }
+
+    const response = await fetch(`${apiBase}/api/admin/stats`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch stats');
+    }
+
+    const data = await response.json();
+
+    stats.value = [
+      {
+        label: 'Total Products',
+        value: data.totalProducts.toString(),
+        icon: Package,
+        change: 'From database',
+      },
+      {
+        label: 'Total Orders',
+        value: data.totalOrders.toString(),
+        icon: ShoppingCart,
+        change: `${data.weekOrders} this week`,
+      },
+      {
+        label: 'Revenue',
+        value: `R${data.revenue}`,
+        icon: DollarSign,
+        change: `R${data.weekRevenue} this week`,
+      },
+      {
+        label: 'Orders This Week',
+        value: data.weekOrders.toString(),
+        icon: TrendingUp,
+        change: 'Last 7 days',
+      },
+    ];
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+  } finally {
+    loading.value = false;
+  }
+});
+</script>

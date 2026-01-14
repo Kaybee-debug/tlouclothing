@@ -181,7 +181,7 @@ const { toast } = useToast();
 const isProcessing = ref(false);
 
 const form = ref({
-  email: user.value?.email || '',
+  email: '',
   firstName: '',
   lastName: '',
   address: '',
@@ -192,6 +192,13 @@ const form = ref({
   cvc: '',
 });
 
+// Pre-fill email when user is available
+watchEffect(() => {
+  if (user.value?.email) {
+    form.value.email = user.value.email;
+  }
+});
+
 const shipping = computed(() => totalPrice.value >= 100 ? 0 : 99.99);
 const total = computed(() => totalPrice.value + shipping.value);
 
@@ -200,17 +207,75 @@ if (items.value.length === 0) {
 }
 
 const handleSubmit = async () => {
+  if (!user.value) {
+    toast({
+      title: 'Error',
+      description: 'You must be logged in to place an order.',
+      variant: 'destructive',
+    });
+    navigateTo('/auth?from=/checkout');
+    return;
+  }
+
   isProcessing.value = true;
 
-  // Simulate payment processing
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  try {
+    const config = useRuntimeConfig();
+    const apiBase = config.public.apiBase;
+    const token = process.client ? localStorage.getItem('token') : null;
 
-  clearCart();
-  toast({
-    title: 'Order placed successfully!',
-    description: "Thank you for your purchase. You'll receive a confirmation email shortly.",
-  });
-  navigateTo('/payment-success');
+    // Prepare order data
+    const orderData = {
+      items: items.value.map(item => ({
+        productId: parseInt(item.product.id),
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+      totalAmount: total.value,
+      shippingAddress: {
+        email: form.value.email,
+        firstName: form.value.firstName,
+        lastName: form.value.lastName,
+        address: form.value.address,
+        city: form.value.city,
+        zip: form.value.zip,
+      },
+    };
+
+    // Create order in database
+    const response = await fetch(`${apiBase}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create order');
+    }
+
+    const orderResult = await response.json();
+
+    clearCart();
+    toast({
+      title: 'Order placed successfully!',
+      description: `Order #${orderResult.order.id} has been placed. Thank you for your purchase!`,
+    });
+    
+    // Redirect to orders page to see the order
+    navigateTo(`/orders?orderId=${orderResult.order.id}`);
+  } catch (error) {
+    console.error('Order error:', error);
+    toast({
+      title: 'Order failed',
+      description: 'Unable to place order. Please try again.',
+      variant: 'destructive',
+    });
+  } finally {
+    isProcessing.value = false;
+  }
 };
 </script>
 

@@ -50,16 +50,17 @@
               <User class="h-5 w-5" />
             </Button>
           </template>
-          <div class="px-2 py-1.5">
-            <p class="text-sm font-medium">{{ user?.name }}</p>
-            <p class="text-xs text-muted-foreground">{{ user?.email }}</p>
+          <div class="px-2 py-1.5 min-w-[200px]">
+            <p class="text-sm font-medium text-foreground">{{ user?.name || 'User' }}</p>
+            <p class="text-xs text-muted-foreground truncate">{{ user?.email }}</p>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem v-if="isAdmin" @click="navigateTo('/admin')">
+          <DropdownMenuItem v-if="isAdmin" @click="() => navigateTo('/admin')">
             <LayoutDashboard class="mr-2 h-4 w-4" />
             Admin Dashboard
           </DropdownMenuItem>
           <DropdownMenuItem @click="navigateTo('/orders')">
+            <ShoppingBag class="mr-2 h-4 w-4" />
             My Orders
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -130,6 +131,14 @@
           </NuxtLink>
           <template v-if="isAuthenticated">
             <NuxtLink
+              to="/orders"
+              class="text-sm font-medium py-2 flex items-center gap-2"
+              @click="isOpen = false"
+            >
+              <ShoppingBag class="h-4 w-4" />
+              My Orders
+            </NuxtLink>
+            <NuxtLink
               v-if="isAdmin"
               to="/admin"
               class="text-sm font-medium py-2"
@@ -168,8 +177,18 @@ const { user, isAuthenticated, isAdmin, logout } = useAuth();
 const isOpen = ref(false);
 
 const handleLogout = () => {
+  console.log('🔓 Logout button clicked');
+  console.log('Current user:', user.value);
+  
   logout();
-  navigateTo('/');
+  
+  console.log('User after logout:', user.value);
+  console.log('Navigating to home...');
+  
+  // Use window.location for reliable navigation
+  setTimeout(() => {
+    window.location.href = '/';
+  }, 200);
 };
 </script>
 
