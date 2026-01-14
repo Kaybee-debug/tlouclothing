@@ -1,73 +1,108 @@
-# Welcome to your Lovable project
+# Xiselo Safety - Nuxt 3 E-commerce Application
 
-## Project info
+This is a Nuxt 3 e-commerce application for Xiselo Safety, converted from React + Vite.
 
-**URL**: https://lovable.dev/projects/e01be570-ebae-4e8b-b617-aa6b9fd8268b
+## Technologies
 
-## How can I edit this code?
+- **Nuxt 3** - Vue.js framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **VueUse** - Vue composition utilities
+- **Sonner** - Toast notifications
+- **Lucide Vue** - Icons
 
-There are several ways of editing your application.
+## Project Structure
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/e01be570-ebae-4e8b-b617-aa6b9fd8268b) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+├── assets/          # CSS and static assets
+├── components/      # Vue components
+│   ├── ui/         # UI components (buttons, inputs, etc.)
+│   ├── layout/     # Layout components (Navbar, Footer)
+│   ├── home/       # Home page components
+│   └── products/   # Product-related components
+├── composables/     # Vue composables (useAuth, useCart)
+├── data/           # Static data
+├── layouts/        # Layout templates
+├── middleware/     # Route middleware (auth, admin)
+├── pages/          # Pages (auto-routing)
+├── plugins/        # Nuxt plugins
+├── public/          # Public assets
+└── types/          # TypeScript types
 ```
 
-**Edit a file directly in GitHub**
+## Getting Started
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
 
-**Use GitHub Codespaces**
+- Node.js 18+ 
+- npm or yarn
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Installation
 
-## What technologies are used for this project?
+```bash
+# Install dependencies
+npm install
 
-This project is built with:
+# Start development server
+npm run dev
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Build for production
+npm run build
 
-## How can I deploy this project?
+# Preview production build
+npm run preview
+```
 
-Simply open [Lovable](https://lovable.dev/projects/e01be570-ebae-4e8b-b617-aa6b9fd8268b) and click on Share -> Publish.
+## Features
 
-## Can I connect a custom domain to my Lovable project?
+- 🛍️ Product catalog with categories
+- 🛒 Shopping cart functionality
+- 👤 User authentication (demo mode)
+- 🔐 Protected routes
+- 👨‍💼 Admin dashboard
+- 📱 Responsive design
+- 🎨 Modern UI with Tailwind CSS
 
-Yes, you can!
+## Demo Credentials
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+**Admin:**
+- Email: `admin@fabric.com`
+- Password: `admin123`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Customer:**
+- Email: `john@example.com`
+- Password: `customer123`
+
+## Development
+
+The app runs on `http://localhost:3000` by default.
+
+### Backend API
+
+The frontend expects a backend API running on `http://localhost:5000`. Update the API URL in:
+- `nuxt.config.ts` (runtimeConfig)
+- `pages/products/index.vue` (fetch URL)
+
+## Deployment
+
+Build the application:
+
+```bash
+npm run build
+```
+
+The output will be in the `.output` directory.
+
+For static hosting:
+
+```bash
+npm run generate
+```
+
+This creates a static site in the `.output/public` directory.
+
+## Notes
+
+- Authentication is currently in demo mode (localStorage-based)
+- Cart data persists in localStorage
+- Product data can be fetched from backend API or uses fallback sample data
