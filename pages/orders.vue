@@ -1,138 +1,138 @@
 <template>
-  <div class="container py-12">
-    <h1 class="font-display text-4xl font-bold text-foreground mb-8">My Orders</h1>
-
-    <div v-if="loading" class="text-center py-12">
-      <p class="text-muted-foreground">Loading orders...</p>
-    </div>
-
-    <div v-else-if="orders.length === 0" class="text-center py-12">
-      <p class="text-muted-foreground mb-4">You haven't placed any orders yet.</p>
-      <NuxtLink to="/products">
-        <Button>Start Shopping</Button>
-      </NuxtLink>
-    </div>
-
-    <div v-else class="space-y-6">
-      <div
-        v-for="order in orders"
-        :key="order.id"
-        class="bg-card rounded-lg shadow-elegant p-6 animate-fade-up"
-      >
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="font-display text-xl font-semibold text-foreground">
-              Order #{{ order.id }}
-            </h2>
-            <p class="text-sm text-muted-foreground">
-              {{ formatDate(order.createdAt) }}
-            </p>
-          </div>
-          <div class="text-right">
-            <div class="text-lg font-semibold text-primary">
-              R{{ order.totalAmount.toFixed(2) }}
+  <div class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+      <h1 class="font-display text-4xl font-bold text-foreground mb-8">My Orders</h1>
+      
+      <div v-if="pending" class="text-center py-12">
+        <p class="text-gray-500">Loading orders...</p>
+      </div>
+      
+      <div v-else-if="orders && orders.length > 0" class="space-y-4">
+        <div 
+          v-for="order in orders" 
+          :key="order.id"
+          class="bg-white rounded-lg p-6 shadow-sm"
+        >
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-semibold text-lg">Order #{{ order.id }}</h3>
+              <p class="text-sm text-gray-500">{{ formatDate(order.created_at) }}</p>
             </div>
-            <span
+            <span 
+              class="px-3 py-1 rounded-full text-sm font-medium"
               :class="{
-                'bg-green-100 text-green-800': order.status === 'paid',
+                'bg-green-100 text-green-800': order.status === 'completed' || order.status === 'delivered',
                 'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                'bg-red-100 text-red-800': order.status === 'failed',
+                'bg-blue-100 text-blue-800': order.status === 'processing' || order.status === 'paid'
               }"
-              class="px-2 py-1 rounded text-xs font-medium capitalize"
             >
-              {{ order.status }}
+              {{ order.status || 'pending' }}
             </span>
           </div>
-        </div>
-
-        <div class="border-t border-border pt-4 mt-4">
-          <h3 class="font-semibold text-foreground mb-3">Items:</h3>
-          <div class="space-y-2">
-            <div
-              v-for="item in order.items"
-              :key="item.id"
+          
+          <div class="space-y-2 mb-4">
+            <div 
+              v-for="(item, index) in getOrderItems(order)" 
+              :key="index"
               class="flex justify-between text-sm"
             >
-              <span class="text-muted-foreground">
-                {{ item.product_name }} x{{ item.quantity }}
-              </span>
+              <span>{{ item.quantity }}x {{ item.name || item.product_name || 'Product' }}</span>
               <span>R{{ (item.price * item.quantity).toFixed(2) }}</span>
             </div>
           </div>
+          
+          <div class="border-t pt-4 flex justify-between font-semibold">
+            <span>Total</span>
+            <span>R{{ order.total_amount || order.total }}</span>
+          </div>
         </div>
+      </div>
+      
+      <div v-else class="text-center py-12">
+        <p class="text-gray-500 mb-4">No orders yet</p>
+        <NuxtLink to="/products" class="text-primary hover:underline">
+          Start Shopping
+        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import Button from '~/components/ui/button.vue';
-import { useAuth } from '~/composables/useAuth';
-import { useToast } from '~/composables/useToast';
-
+<script setup>
 definePageMeta({
-  middleware: 'auth',
-});
+  middleware: 'auth'
+})
 
-const { user } = useAuth();
-const { toast } = useToast();
-const config = useRuntimeConfig();
-const route = useRoute();
+const auth = useAuth()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 
-const orders = ref<any[]>([]);
-const loading = ref(true);
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+const orders = ref([])
+const pending = ref(true)
 
 onMounted(async () => {
   try {
-    const apiBase = config.public.apiBase;
-    const token = process.client ? localStorage.getItem('token') : null;
-
-    if (!token) {
-      navigateTo('/auth');
-      return;
+    // Initialize auth first
+    if (process.client) {
+      auth.initAuth()
+      // Wait a bit for auth to initialize
+      await new Promise(resolve => setTimeout(resolve, 200))
     }
-
+    
+    const token = auth.token?.value || auth.token || (process.client ? localStorage.getItem('token') : null)
+    
+    if (!token) {
+      console.error('No token available for fetching orders')
+      pending.value = false
+      return
+    }
+    
+    console.log('Fetching orders from:', `${apiBase}/api/orders`)
+    
     const response = await fetch(`${apiBase}/api/orders`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
     if (!response.ok) {
-      throw new Error('Failed to fetch orders');
+      const errorText = await response.text()
+      console.error('Failed to fetch orders:', response.status, errorText)
+      pending.value = false
+      return
     }
-
-    const data = await response.json();
-    orders.value = data;
-
-    // If there's an orderId in query, show success message
-    if (route.query.orderId) {
-      toast({
-        title: 'Order placed successfully!',
-        description: `Your order #${route.query.orderId} has been confirmed.`,
-      });
-    }
+    
+    const data = await response.json()
+    console.log('Orders fetched:', data)
+    orders.value = data.orders || data || []
+    console.log('Orders set:', orders.value.length, 'orders')
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    toast({
-      title: 'Error',
-      description: 'Unable to load your orders.',
-      variant: 'destructive',
-    });
+    console.error('Error fetching orders:', error)
+    console.error('Error stack:', error.stack)
   } finally {
-    loading.value = false;
+    pending.value = false
   }
-});
-</script>
+})
 
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+}
+
+const getOrderItems = (order) => {
+  if (!order.items) return []
+  try {
+    if (typeof order.items === 'string') {
+      return JSON.parse(order.items)
+    }
+    return order.items
+  } catch {
+    return []
+  }
+}
+</script>

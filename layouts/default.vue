@@ -1,19 +1,15 @@
 <template>
   <div class="min-h-screen flex flex-col">
-    <Navbar />
+    <LayoutNavbar />
     <main class="flex-1">
       <slot />
     </main>
-    <Footer v-if="!hideFooter" />
+    <LayoutFooter />
   </div>
 </template>
 
-<script setup lang="ts">
-import Navbar from '~/components/layout/Navbar.vue';
-import Footer from '~/components/layout/Footer.vue';
-
-defineProps<{
-  hideFooter?: boolean;
-}>();
+<script setup>
+// Layout can be empty or have shared logic
 </script>
+
 

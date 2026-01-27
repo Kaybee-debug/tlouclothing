@@ -1,39 +1,38 @@
-const db = require("../db");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { Pool } = require('pg');
 
-// JWT secret (should be in .env in production)
-const JWT_SECRET = process.env.JWT_SECRET || "xisekelo-safety-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || 'xisekelo-safety-secret-key-change-in-production';
 
-// Register new user
+const pool = new Pool({
+  user: process.env.DB_USER || 'xisekelo',
+  host: process.env.DB_HOST || '10.0.0.65',
+  database: process.env.DB_NAME || 'xisekelo',
+  password: process.env.DB_PASSWORD || 'pass123',
+  port: process.env.DB_PORT || 5432,
+});
+
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validate input
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
     // Check if user already exists
-    const existingUser = await db.query("SELECT id FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
-    const result = await db.query(
-      `INSERT INTO users (name, email, password_hash, role) 
-       VALUES ($1, $2, $3, 'customer') 
-       RETURNING id, name, email, role, created_at`,
-      [name, email, passwordHash]
+    // Create user
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
+      [name, email, hashedPassword, 'customer']
     );
 
     const user = result.rows[0];
@@ -42,111 +41,98 @@ const register = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: '24h' }
     );
 
     res.status(201).json({
-      message: "User created successfully",
+      message: 'User registered successfully',
+      token,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-      },
-      token,
+        role: user.role
+      }
     });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Unable to create account" });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Login user
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Find user by email
-    const result = await db.query(
-      "SELECT id, name, email, password_hash, role FROM users WHERE email = $1",
-      [email]
-    );
-
+    // Find user
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const user = result.rows[0];
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    // Check password (column might be password_hash instead of password)
+    const passwordField = user.password_hash || user.password;
+    const isValidPassword = await bcrypt.compare(password, passwordField);
     if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: '24h' }
     );
 
-    res.status(200).json({
-      message: "Login successful",
+    res.json({
+      message: 'Login successful',
+      token,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-      },
-      token,
+        role: user.role
+      }
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Unable to login" });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get current user (protected route)
 const getCurrentUser = async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
     if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+      return res.status(401).json({ message: 'No token provided' });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const result = await db.query(
-      "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
+    const result = await pool.query(
+      'SELECT id, name, email, role FROM users WHERE id = $1',
       [decoded.id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const user = result.rows[0];
-    res.status(200).json({
-      id: user.id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
+    res.json({ user: result.rows[0] });
   } catch (error) {
-    console.error("Get user error:", error);
-    res.status(401).json({ message: "Invalid or expired token" });
+    console.error('Get current user error:', error);
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
 module.exports = {
   register,
   login,
-  getCurrentUser,
+  getCurrentUser
 };
-

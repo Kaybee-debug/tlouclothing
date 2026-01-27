@@ -1,15 +1,20 @@
 <template>
-  <div>
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup>
-const { checkAuth } = useAuth();
+// Initialize auth and cart on app load
+const auth = useAuth()
+const cart = useCart()
 
 onMounted(() => {
-  checkAuth();
-});
+  if (process.client) {
+    auth.initAuth()
+    // Cart will be loaded by initAuth based on logged-in user
+  }
+})
 </script>
+
+

@@ -1,31 +1,33 @@
 {
-  "name": "xiselosafety-app",
+  "name": "xiselosafety-nuxt",
+  "private": true,
   "version": "1.0.0",
-  "description": "Xisekelo Safety E-commerce Application",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "nuxt dev",
     "dev:frontend": "nuxt dev",
     "dev:backend": "cd backend && npm run dev",
     "build": "nuxt build",
-    "start": "node backend/server.js",
-    "install:all": "npm install && cd backend && npm install"
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@nuxtjs/google-fonts": "^3.2.0",
     "@nuxtjs/tailwindcss": "^6.12.1",
-    "@vueuse/nuxt": "^11.1.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-vue-next": "^0.460.0",
+    "@pinia/nuxt": "^0.5.1",
+    "lucide-vue-next": "^0.562.0",
     "nuxt": "^3.13.0",
-    "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7",
-    "vue": "^3.5.13"
+    "pinia": "^2.1.7",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@nuxt/devtools": "latest",
+    "@types/node": "^22.16.5",
+    "autoprefixer": "^10.4.22",
+    "lovable-tagger": "^1.1.11",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.8.3"
   }
 }

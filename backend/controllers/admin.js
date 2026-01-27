@@ -1,119 +1,343 @@
-const db = require("../db");
-const jwt = require("jsonwebtoken");
+const { Pool } = require('pg');
 
-const JWT_SECRET = process.env.JWT_SECRET || "xisekelo-safety-secret-key-change-in-production";
+const pool = new Pool({
+  user: process.env.DB_USER || 'xisekelo',
+  host: process.env.DB_HOST || '10.0.0.65',
+  database: process.env.DB_NAME || 'xisekelo',
+  password: process.env.DB_PASSWORD || 'pass123',
+  port: process.env.DB_PORT || 5432,
+});
 
-// Middleware to verify admin token
-const verifyAdmin = (req, res, next) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
+// Test connection
+pool.query('SELECT NOW()')
+  .then(() => console.log('Admin controller: Database connection OK'))
+  .catch(err => console.error('Admin controller: Database connection failed:', err));
 
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    req.userId = decoded.id;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-};
-
-// Get dashboard stats
 const getDashboardStats = async (req, res) => {
   try {
+    console.log('Fetching dashboard stats...');
+    
     // Get total products
-    const productsResult = await db.query("SELECT COUNT(*) as count FROM products");
+    const productsResult = await pool.query('SELECT COUNT(*) FROM products');
     const totalProducts = parseInt(productsResult.rows[0].count);
+    console.log('Total products:', totalProducts);
+
+    // Get products added this week
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const productsThisWeekResult = await pool.query(
+      'SELECT COUNT(*) FROM products WHERE created_at >= $1',
+      [weekAgo]
+    );
+    const productsThisWeek = parseInt(productsThisWeekResult.rows[0].count);
 
     // Get total orders
-    const ordersResult = await db.query("SELECT COUNT(*) as count FROM orders");
+    const ordersResult = await pool.query('SELECT COUNT(*) FROM orders');
     const totalOrders = parseInt(ordersResult.rows[0].count);
-
-    // Get total revenue
-    const revenueResult = await db.query(
-      "SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE status = 'paid'"
-    );
-    const revenue = parseFloat(revenueResult.rows[0].total || 0);
+    console.log('Total orders:', totalOrders);
 
     // Get orders this week
-    const weekOrdersResult = await db.query(
-      `SELECT COUNT(*) as count FROM orders 
-       WHERE created_at >= NOW() - INTERVAL '7 days'`
+    const ordersThisWeekResult = await pool.query(
+      'SELECT COUNT(*) FROM orders WHERE created_at >= $1',
+      [weekAgo]
     );
-    const weekOrders = parseInt(weekOrdersResult.rows[0].count);
+    const ordersThisWeek = parseInt(ordersThisWeekResult.rows[0].count);
 
-    // Get revenue this week
-    const weekRevenueResult = await db.query(
-      `SELECT COALESCE(SUM(total_amount), 0) as total FROM orders 
-       WHERE status = 'paid' AND created_at >= NOW() - INTERVAL '7 days'`
+    // Get total revenue (from all paid/completed orders)
+    // Include all statuses except 'cancelled' and 'pending'
+    const revenueResult = await pool.query(
+      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2',
+      ['cancelled', 'pending']
     );
-    const weekRevenue = parseFloat(weekRevenueResult.rows[0].total || 0);
+    const totalRevenue = parseFloat(revenueResult.rows[0].sum) || 0;
+    console.log('Total revenue:', totalRevenue);
 
-    res.status(200).json({
+    // Get revenue this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const revenueThisMonthResult = await pool.query(
+      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2 AND created_at >= $3',
+      ['cancelled', 'pending', startOfMonth]
+    );
+    const revenueThisMonth = parseFloat(revenueThisMonthResult.rows[0].sum) || 0;
+
+    // Get revenue last month
+    const startOfLastMonth = new Date(startOfMonth);
+    startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+    const endOfLastMonth = new Date(startOfMonth);
+    const revenueLastMonthResult = await pool.query(
+      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2 AND created_at >= $3 AND created_at < $4',
+      ['cancelled', 'pending', startOfLastMonth, endOfLastMonth]
+    );
+    const revenueLastMonth = parseFloat(revenueLastMonthResult.rows[0].sum) || 0;
+
+    // Calculate revenue percentage change
+    const revenueChange = revenueLastMonth > 0 
+      ? ((revenueThisMonth - revenueLastMonth) / revenueLastMonth * 100).toFixed(1)
+      : revenueThisMonth > 0 ? '100' : '0';
+
+    // Get total users (for conversion rate calculation)
+    const usersResult = await pool.query('SELECT COUNT(*) FROM users');
+    const totalUsers = parseInt(usersResult.rows[0].count);
+
+    // Calculate conversion rate (orders / users * 100)
+    const conversionRate = totalUsers > 0 
+      ? ((totalOrders / totalUsers) * 100).toFixed(1)
+      : '0';
+
+    // Get conversion rate last month (approximate)
+    const usersLastMonthResult = await pool.query(
+      'SELECT COUNT(*) FROM users WHERE created_at < $1',
+      [startOfMonth]
+    );
+    const usersLastMonth = parseInt(usersLastMonthResult.rows[0].count);
+    const ordersLastMonthResult = await pool.query(
+      'SELECT COUNT(*) FROM orders WHERE created_at >= $1 AND created_at < $2',
+      [startOfLastMonth, endOfLastMonth]
+    );
+    const ordersLastMonth = parseInt(ordersLastMonthResult.rows[0].count);
+    const conversionRateLastMonth = usersLastMonth > 0
+      ? ((ordersLastMonth / usersLastMonth) * 100).toFixed(1)
+      : '0';
+    const conversionRateChange = (parseFloat(conversionRate) - parseFloat(conversionRateLastMonth)).toFixed(1);
+
+    // Get low stock products (stock < 50)
+    const lowStockResult = await pool.query(
+      `SELECT p.*, c.name as category 
+       FROM products p 
+       LEFT JOIN categories c ON p.category_id = c.id 
+       WHERE p.stock < 50 
+       ORDER BY p.stock ASC 
+       LIMIT 5`
+    );
+
+    // Get recent orders
+    const recentOrdersResult = await pool.query(
+      'SELECT o.*, u.name as user_name, u.email as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 5'
+    );
+    console.log('Recent orders:', recentOrdersResult.rows.length);
+    console.log('Low stock products:', lowStockResult.rows.length);
+
+    const statsData = {
       totalProducts,
+      productsThisWeek,
       totalOrders,
-      revenue: revenue.toFixed(2),
-      weekOrders,
-      weekRevenue: weekRevenue.toFixed(2),
+      ordersThisWeek,
+      totalRevenue,
+      revenueThisMonth,
+      revenueChange,
+      conversionRate,
+      conversionRateChange,
+      totalUsers,
+      recentOrders: recentOrdersResult.rows.map(order => ({
+        ...order,
+        total: parseFloat(order.total_amount) || 0,
+        total_amount: parseFloat(order.total_amount) || 0
+      })),
+      lowStockProducts: lowStockResult.rows.map(product => ({
+        ...product,
+        id: product.id.toString(),
+        price: parseFloat(product.price) || 0,
+        stock: parseInt(product.stock) || 0
+      }))
+    };
+    
+    console.log('Dashboard stats prepared:', JSON.stringify(statsData, null, 2));
+    
+    res.json({
+      stats: statsData
     });
   } catch (error) {
-    console.error("Dashboard stats error:", error);
-    res.status(500).json({ message: "Unable to fetch dashboard stats" });
+    console.error('Get dashboard stats error:', error);
+    console.error('Error details:', error.message, error.stack);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
-// Get all orders (admin)
 const getAllOrders = async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT 
-        o.id,
-        o.total_amount,
-        o.status,
-        o.created_at,
-        u.name as customer_name,
-        u.email as customer_email,
-        json_agg(
-          json_build_object(
-            'id', oi.id,
-            'product_id', oi.product_id,
-            'product_name', p.name,
-            'quantity', oi.quantity,
-            'price', oi.price
-          )
-        ) FILTER (WHERE oi.id IS NOT NULL) as items
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      LEFT JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN products p ON oi.product_id = p.id
-      GROUP BY o.id, o.total_amount, o.status, o.created_at, u.name, u.email
-      ORDER BY o.created_at DESC`
+    const result = await pool.query(
+      'SELECT o.*, u.name as user_name, u.email as user_email FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC'
     );
 
-    const orders = result.rows.map(row => ({
-      id: row.id.toString(),
-      totalAmount: parseFloat(row.total_amount),
-      status: row.status,
-      createdAt: row.created_at,
-      customer: row.customer_name || 'Unknown',
-      email: row.customer_email || '',
-      items: row.items || [],
+    // Map total_amount to total for frontend compatibility
+    const orders = result.rows.map(order => ({
+      ...order,
+      total: parseFloat(order.total_amount) || 0
     }));
 
-    res.status(200).json(orders);
+    res.json({ orders });
   } catch (error) {
-    console.error("Get all orders error:", error);
-    res.status(500).json({ message: "Unable to fetch orders" });
+    console.error('Get all orders error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+
+    const result = await pool.query(
+      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.json({ order: result.rows[0] });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const getCategories = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name FROM categories ORDER BY name ASC');
+    res.json({ categories: result.rows });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const createProduct = async (req, res) => {
+  try {
+    const { name, description, category, price, stock, image_url } = req.body;
+
+    // First, get or create category
+    let categoryResult = await pool.query('SELECT id FROM categories WHERE name = $1', [category]);
+    let categoryId;
+
+    if (categoryResult.rows.length === 0) {
+      const newCategory = await pool.query('INSERT INTO categories (name) VALUES ($1) RETURNING id', [category]);
+      categoryId = newCategory.rows[0].id;
+    } else {
+      categoryId = categoryResult.rows[0].id;
+    }
+
+    // Insert product
+    const result = await pool.query(
+      `INSERT INTO products (name, description, category_id, price, stock, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [name, description, categoryId, price, stock, image_url || null]
+    );
+
+    // Get product with category name
+    const productResult = await pool.query(
+      `SELECT p.*, c.name as category
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       WHERE p.id = $1`,
+      [result.rows[0].id]
+    );
+
+    res.status(201).json({
+      id: productResult.rows[0].id.toString(),
+      category_id: productResult.rows[0].category_id,
+      category: productResult.rows[0].category || 'General',
+      name: productResult.rows[0].name,
+      description: productResult.rows[0].description,
+      price: parseFloat(productResult.rows[0].price),
+      stock: productResult.rows[0].stock,
+      image_url: productResult.rows[0].image_url || '',
+      created_at: productResult.rows[0].created_at
+    });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, category, price, stock, image_url } = req.body;
+
+    // Get or create category
+    let categoryResult = await pool.query('SELECT id FROM categories WHERE name = $1', [category]);
+    let categoryId;
+
+    if (categoryResult.rows.length === 0) {
+      const newCategory = await pool.query('INSERT INTO categories (name) VALUES ($1) RETURNING id', [category]);
+      categoryId = newCategory.rows[0].id;
+    } else {
+      categoryId = categoryResult.rows[0].id;
+    }
+
+    // Update product
+    await pool.query(
+      `UPDATE products
+       SET name = $1, description = $2, category_id = $3, price = $4, stock = $5, image_url = $6
+       WHERE id = $7`,
+      [name, description, categoryId, price, stock, image_url || null, id]
+    );
+
+    // Get updated product with category name
+    const productResult = await pool.query(
+      `SELECT p.*, c.name as category
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       WHERE p.id = $1`,
+      [id]
+    );
+
+    if (productResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.json({
+      id: productResult.rows[0].id.toString(),
+      category_id: productResult.rows[0].category_id,
+      category: productResult.rows[0].category || 'General',
+      name: productResult.rows[0].name,
+      description: productResult.rows[0].description,
+      price: parseFloat(productResult.rows[0].price),
+      stock: productResult.rows[0].stock,
+      image_url: productResult.rows[0].image_url || '',
+      created_at: productResult.rows[0].created_at
+    });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 module.exports = {
-  getDashboardStats: [verifyAdmin, getDashboardStats],
-  getAllOrders: [verifyAdmin, getAllOrders],
+  getDashboardStats,
+  getAllOrders,
+  updateOrderStatus,
+  getCategories,
+  createProduct,
+  updateProduct,
+  deleteProduct
 };
-

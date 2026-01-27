@@ -14,6 +14,13 @@ module.exports = {
         primary: 'hsl(20, 69%, 47%)',
         secondary: 'hsl(35, 30%, 92%)',
         accent: 'hsl(145, 25%, 45%)',
+        foreground: 'hsl(222.2 84% 4.9%)',
+        'muted-foreground': 'hsl(215.4 16.3% 46.9%)',
+        charcoal: 'hsl(210, 11%, 15%)',
+        cream: 'hsl(47, 100%, 97%)',
+      },
+      backgroundImage: {
+        'gradient-soft': 'linear-gradient(135deg, hsl(35, 30%, 96%) 0%, hsl(35, 20%, 94%) 100%)',
       },
       boxShadow: {
         elegant: '0 4px 12px hsl(20 15% 15% / 0.08)',
@@ -23,18 +30,24 @@ module.exports = {
         display: ['Playfair Display', 'serif'],
         sans: ['Work Sans', 'sans-serif'],
       },
-      container: {
-        center: true,
-        padding: {
-          DEFAULT: '1rem',
-          sm: '2rem',
-          lg: '4rem',
-          xl: '5rem',
-          '2xl': '6rem',
+      animation: {
+        'fade-up': 'fadeUp 0.6s ease-out forwards',
+      },
+      keyframes: {
+        fadeUp: {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(30px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
         },
       },
     },
   },
   plugins: [],
 }
+
 

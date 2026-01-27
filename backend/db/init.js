@@ -1,78 +1,46 @@
-const { Pool } = require("pg");
-require("dotenv").config();
-const fs = require("fs");
-const path = require("path");
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 
-// Connect to PostgreSQL server (not a specific database) to create database
-const adminPool = new Pool({
-  host: process.env.DB_HOST || "localhost",
+const pool = new Pool({
+  user: process.env.DB_USER || 'xisekelo',
+  host: process.env.DB_HOST || '10.0.0.65',
+  database: process.env.DB_NAME || 'xisekelo',
+  password: process.env.DB_PASSWORD || 'pass123',
   port: process.env.DB_PORT || 5432,
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD,
-  database: "postgres", // Connect to default postgres database
 });
 
-async function createDatabase() {
-  const dbName = process.env.DB_NAME || "xiselosafety";
-  
+async function initDatabase() {
   try {
-    // Check if database exists
-    const checkDb = await adminPool.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
+    // Insert demo users (assuming table structure exists)
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    const customerPassword = await bcrypt.hash('pass123', 10);
 
-    if (checkDb.rows.length === 0) {
-      // Create database
-      await adminPool.query(`CREATE DATABASE ${dbName}`);
-      console.log(`✅ Database '${dbName}' created successfully`);
-    } else {
-      console.log(`✅ Database '${dbName}' already exists`);
+    // Check if users exist first
+    const existingAdmin = await pool.query('SELECT id FROM users WHERE email = $1', ['admin@fabric.com']);
+    const existingCustomer = await pool.query('SELECT id FROM users WHERE email = $1', ['molepok@mogaleintegrated.co.za']);
+
+    if (existingAdmin.rows.length === 0) {
+      await pool.query(
+        'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
+        ['Admin User', 'admin@fabric.com', adminPassword, 'admin']
+      );
+      console.log('Admin user created');
     }
 
-    // Close admin connection
-    await adminPool.end();
-
-    // Connect to the new database and run schema
-    const dbPool = new Pool({
-      host: process.env.DB_HOST || "localhost",
-      port: process.env.DB_PORT || 5432,
-      user: process.env.DB_USER || "postgres",
-      password: process.env.DB_PASSWORD,
-      database: dbName,
-    });
-
-    // Read and execute schema
-    const schemaPath = path.join(__dirname, "schema.sql");
-    const schema = fs.readFileSync(schemaPath, "utf8");
-    
-    // Split by semicolons and execute each statement
-    const statements = schema
-      .split(";")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !s.startsWith("--"));
-
-    for (const statement of statements) {
-      if (statement.toLowerCase().includes("create database")) {
-        continue; // Skip CREATE DATABASE statements
-      }
-      try {
-        await dbPool.query(statement);
-      } catch (err) {
-        // Ignore "already exists" errors
-        if (!err.message.includes("already exists")) {
-          console.error("Error executing statement:", err.message);
-        }
-      }
+    if (existingCustomer.rows.length === 0) {
+      await pool.query(
+        'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
+        ['Customer User', 'molepok@mogaleintegrated.co.za', customerPassword, 'user']
+      );
+      console.log('Customer user created');
     }
 
-    console.log("✅ Database schema created successfully");
-    await dbPool.end();
+    console.log('Database initialization completed');
   } catch (error) {
-    console.error("❌ Error setting up database:", error.message);
-    process.exit(1);
+    console.error('Database initialization error:', error);
+  } finally {
+    await pool.end();
   }
 }
 
-createDatabase();
-
+initDatabase();

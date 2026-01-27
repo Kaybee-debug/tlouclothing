@@ -1,83 +1,133 @@
 <template>
   <div>
-    <!-- Hero -->
-    <section class="relative py-24 overflow-hidden">
+    <!-- Hero Section -->
+    <section class="relative min-h-[60vh] flex items-center overflow-hidden">
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=1920&h=800&fit=crop"
+          src="/hero-background.jpg"
           alt="Fabric workshop"
           class="w-full h-full object-cover"
         />
-        <div class="absolute inset-0 bg-gradient-hero" />
+        <div class="absolute inset-0 bg-gradient-to-b from-[#2b1b12]/80 via-[#3a2418]/70 to-[#1f140e]/80" />
       </div>
-      <div class="container relative z-10">
-        <div class="max-w-2xl animate-fade-up">
-          <h1 class="font-display text-5xl md:text-6xl font-bold text-cream">
+
+      <div class="container mx-auto px-4 relative z-10 max-w-7xl">
+        <div class="max-w-2xl animate-fade-up ml-6 md:ml-12">
+          <span class="inline-block px-4 py-1.5 text-sm font-medium text-white bg-orange-500/90 rounded-full mb-6">
+            Fabric workshop
+          </span>
+
+          <h1 class="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
             Our Story
           </h1>
-          <p class="mt-6 text-lg text-cream/80">
-            Since 1985, Xisekelo Fabrics has been the trusted source for premium textiles,
-            serving designers, craftspeople, and manufacturers worldwide.
+
+          <p class="mt-6 text-lg text-white/80 max-w-lg">
+            Since 1985, Artisan Fabrics has been the trusted source for premium textiles, serving designers, craftspeople, and manufacturers worldwide.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Values -->
-    <section class="py-20">
-      <div class="container">
-        <div class="grid md:grid-cols-3 gap-8">
-          <div
-            v-for="(value, index) in values"
-            :key="value.title"
-            class="text-center p-8 bg-card rounded-lg shadow-elegant animate-fade-up"
-            :style="{ animationDelay: `${index * 100}ms` }"
-          >
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-6">
-              <component :is="value.icon" class="h-6 w-6" />
+    <!-- Features Section -->
+    <section class="py-16 bg-secondary/50">
+      <div class="container mx-auto px-4 max-w-7xl">
+        <div class="grid grid-cols-3 gap-8">
+          <div class="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-4">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
-            <h3 class="font-display text-xl font-semibold">{{ value.title }}</h3>
-            <p class="mt-3 text-muted-foreground">{{ value.description }}</p>
+            <h3 class="font-display font-semibold text-foreground mb-4">Quality First</h3>
+            <p class="text-sm text-muted-foreground">
+              Every fabric in our collection is hand-selected and tested to meet the highest standards of durability, texture, and performance.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-4">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+              </svg>
+            </div>
+            <h3 class="font-display font-semibold text-foreground mb-4">Sustainability</h3>
+            <p class="text-sm text-muted-foreground">
+              We partner with eco-conscious mills and prioritize organic, recycled, and responsibly-sourced materials.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-lg p-6 shadow-sm text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-4">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+            </div>
+            <h3 class="font-display font-semibold text-foreground mb-4">Expert Guidance</h3>
+            <p class="text-sm text-muted-foreground">
+              Our team of fabric specialists provides personalized recommendations to help you find the perfect textile for your project.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Story -->
-    <section class="py-20 bg-secondary/30">
-      <div class="container">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-          <div class="animate-fade-up">
-            <h2 class="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Four Decades of Excellence
-            </h2>
-            <div class="mt-6 space-y-4 text-muted-foreground">
-              <p>
-                What started as a small family-run fabric shop has grown into one of the
-                most respected textile suppliers in the industry. Our founder, Maria
-                Vasquez, had a simple vision: to provide xisekelo with the finest fabrics
-                available, at fair prices.
-              </p>
-              <p>
-                Today, we carry over 500 varieties of fabric, from everyday cottons to
-                rare silks and specialty textiles. We work directly with mills around the
-                world to ensure consistent quality and ethical production practices.
-              </p>
-              <p>
-                Whether you're creating a single garment or sourcing materials for a
-                large-scale production, our team is here to help you succeed.
-              </p>
-            </div>
-            <NuxtLink to="/products" class="inline-block mt-8">
-              <Button variant="hero" size="lg">
-                Explore Our Collection
-                <ArrowRight class="ml-2 h-4 w-4" />
-              </Button>
-            </NuxtLink>
+    <!-- Story Section -->
+    <section class="py-20">
+      <div class="container mx-auto px-4 max-w-7xl">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="font-display text-3xl md:text-4xl font-bold text-foreground mb-8 text-center">
+            Four Decades of Excellence
+          </h2>
+          
+          <div class="prose prose-lg max-w-none text-muted-foreground space-y-6">
+            <p>
+              What started as a small family-run fabric shop has grown into one of the most respected textile suppliers in the industry. Our founder, Maria Vasquez, had a simple vision: to provide artisans with the finest fabrics available, at fair prices.
+            </p>
+            
+            <p>
+              Today, we carry over 500 varieties of fabric, from everyday cottons to rare silks and specialty textiles. We work directly with mills around the world to ensure consistent quality and ethical production practices.
+            </p>
+            
+            <p>
+              Whether you're creating a single garment or sourcing materials for a large-scale production, our team is here to help you succeed.
+            </p>
           </div>
-          <div class="aspect-square rounded-lg overflow-hidden shadow-elegant animate-fade-up" style="animation-delay: 100ms">
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-gradient-soft">
+      <div class="container mx-auto px-4 max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Explore Our Collection
+            </h2>
+            <p class="text-muted-foreground mb-8">
+              Ready to Start Your Project?
+            </p>
+            <p class="text-muted-foreground mb-8">
+              Browse our collection of premium fabrics or get in touch with our expert team for personalized recommendations.
+            </p>
+            
+            <div class="flex flex-wrap gap-4">
+              <NuxtLink to="/products">
+                <button class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium">
+                  Shop Now
+                </button>
+              </NuxtLink>
+              <NuxtLink to="/contact">
+                <button class="border-2 border-primary text-primary px-8 py-3 rounded-lg hover:bg-primary/10 font-medium">
+                  Contact Us
+                </button>
+              </NuxtLink>
+            </div>
+          </div>
+          
+          <div class="aspect-[4/3] rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=600&fit=crop"
+              src="https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800&h=600&fit=crop"
               alt="Fabric rolls"
               class="w-full h-full object-cover"
             />
@@ -85,65 +135,9 @@
         </div>
       </div>
     </section>
-
-    <!-- CTA -->
-    <section class="py-20">
-      <div class="container">
-        <div class="bg-primary rounded-2xl p-12 text-center">
-          <h2 class="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
-            Ready to Start Your Project?
-          </h2>
-          <p class="mt-4 text-primary-foreground/80 max-w-2xl mx-auto">
-            Browse our collection of premium fabrics or get in touch with our expert
-            team for personalized recommendations.
-          </p>
-          <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <NuxtLink to="/products">
-              <Button
-                variant="secondary"
-                size="lg"
-                class="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-              >
-                Shop Now
-              </Button>
-            </NuxtLink>
-            <Button
-              variant="outline"
-              size="lg"
-              class="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              Contact Us
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ArrowRight, Award, Heart, Leaf } from 'lucide-vue-next';
-import Button from '~/components/ui/button.vue';
-
-const values = [
-  {
-    icon: Award,
-    title: 'Quality First',
-    description:
-      'Every fabric in our collection is hand-selected and tested to meet the highest standards of durability, texture, and performance.',
-  },
-  {
-    icon: Leaf,
-    title: 'Sustainability',
-    description:
-      'We partner with eco-conscious mills and prioritize organic, recycled, and responsibly-sourced materials.',
-  },
-  {
-    icon: Heart,
-    title: 'Expert Guidance',
-    description:
-      'Our team of fabric specialists provides personalized recommendations to help you find the perfect textile for your project.',
-  },
-];
+<script setup>
+// About page
 </script>
-

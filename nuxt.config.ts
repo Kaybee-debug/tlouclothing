@@ -3,70 +3,51 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
   
+  css: ['~/assets/css/main.css'],
+  
   modules: [
     '@nuxtjs/tailwindcss',
-    '@vueuse/nuxt',
-    '@nuxtjs/google-fonts'
+    '@pinia/nuxt',
   ],
-
-  css: ['~/assets/css/main.css'],
-
-  // Exclude frontend folder from being processed
-  ignore: [
-    '**/frontend/**',
-    '**/backend/**',
-  ],
-
+  
+  // Vite configuration for Lovable.dev compatibility
   vite: {
+    plugins: [],
     server: {
-      fs: {
-        deny: ['frontend', 'backend'],
-      },
-    },
-    optimizeDeps: {
-      exclude: ['react', 'react-dom', 'react-router-dom'],
-    },
-    resolve: {
-      alias: {
-        // Prevent React from being resolved - this prevents accidental React imports
-        'react': false,
-        'react-dom': false,
-        'react-router-dom': false,
-      },
+      host: '0.0.0.0', // Allow external connections for Lovable.dev
+      port: 3000,
     },
   },
-
-  // Suppress hydration warnings for client-only features
-  vue: {
-    compilerOptions: {
-      isCustomElement: () => false,
-    },
+  
+  // Dev server configuration for Lovable.dev
+  devServer: {
+    host: '0.0.0.0', // Allow external connections
+    port: 3000,
   },
-
+  
   app: {
     head: {
-      title: 'Xiselo Safety',
+      title: 'Artisan Fabrics | Premium Textile Store',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Discover premium quality fabrics for designers and crafters. From sustainable cottons to luxurious silks, find the perfect textile for your next masterpiece.' },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap' },
       ],
     },
   },
-
-  googleFonts: {
-    families: {
-      'Playfair Display': true,
-      'Work Sans': [400, 500, 600, 700],
-    },
-  },
-
+  
   runtimeConfig: {
     public: {
-      apiBase: process.env.API_BASE || 'http://localhost:3003',
+      apiBase: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3003',
     },
   },
+  
+  ssr: true,
 })
 

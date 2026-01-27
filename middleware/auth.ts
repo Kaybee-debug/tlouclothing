@@ -1,9 +1,14 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const { isAuthenticated } = useAuth();
+  const auth = useAuthStore()
   
-  if (!isAuthenticated.value) {
-    // Redirect to auth page with return URL
-    return navigateTo(`/auth?from=${encodeURIComponent(to.fullPath)}`);
+  // Initialize auth if not already initialized
+  if (process.client && !auth.user) {
+    auth.initAuth()
   }
-});
+  
+  if (!auth.isAuthenticated) {
+    return navigateTo('/auth')
+  }
+})
+
 

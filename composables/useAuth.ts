@@ -1,167 +1,128 @@
-import type { User } from '~/types';
+import { defineStore } from 'pinia'
+import type { User } from '~/types'
 
-export const useAuth = () => {
-  const config = useRuntimeConfig();
-  const apiBase = config.public.apiBase;
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const token = ref<string | null>(null)
 
-  const user = useState<User | null>('auth.user', () => {
-    if (process.client) {
-      const saved = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
-      if (saved && token) {
-        return JSON.parse(saved);
-      }
-    }
-    return null;
-  });
+  const isAuthenticated = computed(() => !!user.value)
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
-  const isAuthenticated = computed(() => !!user.value);
-  const isAdmin = computed(() => user.value?.role === 'admin');
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    if (!process.client) return false;
-    
-    // Validate inputs
-    if (!email || !password) {
-      console.error('❌ Login error: Email and password are required');
-      console.log('Email received:', email);
-      console.log('Password received:', password ? '***' : 'empty');
-      return false;
-    }
-    
-    try {
-      const url = `${apiBase}/api/auth/login`;
-      console.log('🔐 Login request to:', url);
-      console.log('📧 Email:', email);
-      console.log('🔑 Password length:', password.length);
-      
-      const requestBody = { email: email.trim(), password: password.trim() };
-      console.log('📦 Request body:', { email: requestBody.email, password: '***' });
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('❌ Login error: Expected JSON but got:', text.substring(0, 200));
-        return false;
-      }
-
-      const data = await response.json();
-      console.log('✅ Login response:', data);
-
-      if (!response.ok) {
-        console.error('❌ Login failed:', data.message || 'Unknown error');
-        return false;
-      }
-
-      user.value = data.user;
-      if (process.client) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
-      }
-      console.log('✅ Login successful!');
-      return true;
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      return false;
-    }
-  };
-
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    if (!process.client) return false;
-    
-    try {
-      const url = `${apiBase}/api/auth/register`;
-      console.log('Register request to:', url);
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Registration error: Expected JSON but got:', text.substring(0, 100));
-        return false;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return false;
-      }
-
-      user.value = data.user;
-      if (process.client) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token);
-      }
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-      return false;
-    }
-  };
-
-  const logout = () => {
-    console.log('🔓 Logout function called');
-    user.value = null;
-    if (process.client) {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      console.log('✅ User data cleared from localStorage');
-    }
-  };
-
-  // Check if user is logged in on app load
-  const checkAuth = async () => {
-    if (process.client) {
-      const token = localStorage.getItem('token');
-      if (token && !user.value) {
-        try {
-          const response = await fetch(`${apiBase}/api/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            user.value = userData;
-          } else {
-            // Token invalid, clear storage
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
+  function login(email: string, password: string) {
+    return new Promise(async (resolve) => {
+      try {
+        const api = useApi()
+        const response = await api.login(email, password)
+        
+        if (response.token && response.user) {
+          token.value = response.token
+          user.value = response.user
+          
+          if (process.client) {
+            localStorage.setItem('token', response.token)
+            localStorage.setItem('user', JSON.stringify(response.user))
+            
+            // Load user-specific cart after login
+            const cart = useCart()
+            cart.loadCart(response.user.id)
           }
-        } catch (error) {
-          console.error('Auth check error:', error);
+          
+          resolve(true)
+        } else {
+          resolve(false)
         }
+      } catch (error) {
+        console.error('Login error:', error)
+        resolve(false)
+      }
+    })
+  }
+
+  async function register(name: string, email: string, password: string) {
+    return new Promise(async (resolve) => {
+      try {
+        const api = useApi()
+        const response = await api.register(name, email, password)
+        
+        if (response.token && response.user) {
+          token.value = response.token
+          user.value = response.user
+          
+          if (process.client) {
+            localStorage.setItem('token', response.token)
+            localStorage.setItem('user', JSON.stringify(response.user))
+            
+            // Load user-specific cart after registration
+            const cart = useCart()
+            cart.loadCart(response.user.id)
+          }
+          
+          resolve(true)
+        } else {
+          resolve(false)
+        }
+      } catch (error) {
+        console.error('Registration error:', error)
+        resolve(false)
+      }
+    })
+  }
+
+  function logout() {
+    user.value = null
+    token.value = null
+    
+    if (process.client) {
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+    }
+  }
+
+  function initAuth() {
+    if (process.client) {
+      const saved = localStorage.getItem('user')
+      const savedToken = localStorage.getItem('token')
+      
+      if (saved && savedToken) {
+        try {
+          const parsedUser = JSON.parse(saved)
+          user.value = parsedUser
+          token.value = savedToken
+          
+          // Load user-specific cart
+          const cart = useCart()
+          cart.loadCart(parsedUser.id)
+        } catch (e) {
+          console.error('Error parsing saved user:', e)
+        }
+      } else {
+        // No user logged in, load guest cart
+        const cart = useCart()
+        cart.loadCart(null)
       }
     }
-  };
+  }
 
   return {
-    user: readonly(user),
+    user,
+    token,
     isAuthenticated,
     isAdmin,
     login,
     register,
     logout,
-    checkAuth,
-  };
-};
+    initAuth,
+  }
+})
+
+// Alias for consistency - initialize on first use
+export const useAuth = () => {
+  const store = useAuthStore()
+  
+  if (process.client && !store.user) {
+    store.initAuth()
+  }
+  
+  return store
+}
 

@@ -2,10 +2,11 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const { getProducts } = require("../controllers");
+const { getProducts, getProduct } = require("../controllers");
 const { register, login, getCurrentUser } = require("../controllers/auth");
 const { createOrder, getUserOrders } = require("../controllers/orders");
-const { getDashboardStats, getAllOrders } = require("../controllers/admin");
+const { getDashboardStats, getAllOrders, updateOrderStatus, getCategories, createProduct, updateProduct, deleteProduct } = require("../controllers/admin");
+const { upload, uploadImage } = require("../controllers/upload");
 
 const JWT_SECRET = process.env.JWT_SECRET || "xisekelo-safety-secret-key-change-in-production";
 
@@ -51,6 +52,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/products", getProducts);
+router.get("/products/:id", getProduct);
 
 // Auth routes
 router.post("/auth/register", register);
@@ -64,5 +66,11 @@ router.get("/orders", verifyToken, getUserOrders);
 // Admin routes (protected - require admin role)
 router.get("/admin/stats", verifyAdmin, getDashboardStats);
 router.get("/admin/orders", verifyAdmin, getAllOrders);
+router.put("/admin/orders/:id", verifyAdmin, updateOrderStatus);
+router.get("/admin/categories", verifyAdmin, getCategories);
+router.post("/admin/products", verifyAdmin, createProduct);
+router.put("/admin/products/:id", verifyAdmin, updateProduct);
+router.delete("/admin/products/:id", verifyAdmin, deleteProduct);
+router.post("/admin/upload", verifyAdmin, upload.single('image'), uploadImage);
 
 module.exports = router;
