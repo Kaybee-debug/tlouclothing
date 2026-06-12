@@ -1,4 +1,15 @@
 const { Pool } = require('pg');
+const { seedTlouCatalog } = require('../db/seed-tlou-catalog');
+const { TLOU_CATEGORIES } = require('../data/tlou-catalog');
+
+async function ensureTlouCategories() {
+  for (const name of TLOU_CATEGORIES) {
+    const existing = await pool.query('SELECT id FROM categories WHERE name = $1', [name]);
+    if (existing.rows.length === 0) {
+      await pool.query('INSERT INTO categories (name) VALUES ($1)', [name]);
+    }
+  }
+}
 
 const pool = new Pool({
   user: process.env.DB_USER || 'xisekelo',
@@ -43,11 +54,12 @@ const getDashboardStats = async (req, res) => {
     );
     const ordersThisWeek = parseInt(ordersThisWeekResult.rows[0].count);
 
-    // Get total revenue (from all paid/completed orders)
-    // Include all statuses except 'cancelled' and 'pending'
+    // Revenue only after admin confirms payment (paid, processing, shipped, etc.)
+    const revenueStatuses = ['paid', 'processing', 'shipped', 'delivered', 'completed'];
+    const revenuePlaceholders = revenueStatuses.map((_, i) => `$${i + 1}`).join(', ');
     const revenueResult = await pool.query(
-      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2',
-      ['cancelled', 'pending']
+      `SELECT SUM(total_amount) FROM orders WHERE status IN (${revenuePlaceholders})`,
+      revenueStatuses
     );
     const totalRevenue = parseFloat(revenueResult.rows[0].sum) || 0;
     console.log('Total revenue:', totalRevenue);
@@ -57,8 +69,8 @@ const getDashboardStats = async (req, res) => {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     const revenueThisMonthResult = await pool.query(
-      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2 AND created_at >= $3',
-      ['cancelled', 'pending', startOfMonth]
+      `SELECT SUM(total_amount) FROM orders WHERE status IN (${revenuePlaceholders}) AND created_at >= $${revenueStatuses.length + 1}`,
+      [...revenueStatuses, startOfMonth]
     );
     const revenueThisMonth = parseFloat(revenueThisMonthResult.rows[0].sum) || 0;
 
@@ -67,8 +79,8 @@ const getDashboardStats = async (req, res) => {
     startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
     const endOfLastMonth = new Date(startOfMonth);
     const revenueLastMonthResult = await pool.query(
-      'SELECT SUM(total_amount) FROM orders WHERE status != $1 AND status != $2 AND created_at >= $3 AND created_at < $4',
-      ['cancelled', 'pending', startOfLastMonth, endOfLastMonth]
+      `SELECT SUM(total_amount) FROM orders WHERE status IN (${revenuePlaceholders}) AND created_at >= $${revenueStatuses.length + 1} AND created_at < $${revenueStatuses.length + 2}`,
+      [...revenueStatuses, startOfLastMonth, endOfLastMonth]
     );
     const revenueLastMonth = parseFloat(revenueLastMonthResult.rows[0].sum) || 0;
 
@@ -202,10 +214,22 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+function sortCategoryRows(rows) {
+  return [...rows].sort((a, b) => {
+    const ai = TLOU_CATEGORIES.indexOf(a.name);
+    const bi = TLOU_CATEGORIES.indexOf(b.name);
+    const aOrder = ai === -1 ? TLOU_CATEGORIES.length + 1 : ai;
+    const bOrder = bi === -1 ? TLOU_CATEGORIES.length + 1 : bi;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 const getCategories = async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, name FROM categories ORDER BY name ASC');
-    res.json({ categories: result.rows });
+    await ensureTlouCategories();
+    const result = await pool.query('SELECT id, name FROM categories');
+    res.json({ categories: sortCategoryRows(result.rows) });
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -315,6 +339,19 @@ const updateProduct = async (req, res) => {
   }
 };
 
+const syncCatalog = async (req, res) => {
+  try {
+    const result = await seedTlouCatalog(pool);
+    res.json({
+      message: 'T.L.O.U. Clothing catalog synced successfully',
+      count: result.count,
+    });
+  } catch (error) {
+    console.error('Sync catalog error:', error);
+    res.status(500).json({ message: 'Failed to sync T.L.O.U. catalog' });
+  }
+};
+
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -337,6 +374,7 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   getCategories,
+  syncCatalog,
   createProduct,
   updateProduct,
   deleteProduct

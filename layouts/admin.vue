@@ -3,7 +3,8 @@
     <!-- Sidebar -->
     <div class="w-64 bg-white shadow-sm border-r flex flex-col fixed left-0 top-0 bottom-0">
       <div class="p-6 border-b">
-        <h1 class="font-display text-xl font-bold text-foreground">Admin Panel</h1>
+        <h1 class="font-display text-xl font-bold text-primary">T.L.O.U.</h1>
+        <p class="text-xs text-muted-foreground mt-0.5">Clothing Admin</p>
       </div>
       
       <nav class="px-4 py-4 space-y-2 flex-1 overflow-y-auto">

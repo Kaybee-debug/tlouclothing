@@ -20,14 +20,15 @@
           >
             <div class="flex gap-4">
               <img
-                :src="item.image_url || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=600&fit=crop'"
+                :src="item.image_url || fallbackImage"
                 :alt="item.name"
-                class="w-20 h-20 object-cover rounded-lg"
+                class="w-20 h-20 object-cover rounded-lg bg-gray-100"
+                @error="(e) => (e.target.src = fallbackImage)"
               />
               <div class="flex-1">
                 <h3 class="font-semibold text-foreground">{{ item.name }}</h3>
-                <p class="text-sm text-muted-foreground">{{ item.category || 'Fabric' }}</p>
-                <p class="text-primary font-medium">R{{ item.price }} per yard</p>
+                <p class="text-sm text-muted-foreground">{{ item.category || 'Clothing' }}</p>
+                <p class="text-primary font-medium">R{{ Number(item.price).toFixed(2) }} each</p>
               </div>
               <div class="flex items-center gap-3">
                 <input
@@ -94,6 +95,9 @@
 </template>
 
 <script setup>
+import { productImages } from '~/data/tlou-products'
+
 const cart = useCart()
+const fallbackImage = productImages.fallback
 </script>
 

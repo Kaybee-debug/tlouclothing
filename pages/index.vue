@@ -4,6 +4,7 @@
     <HomeFeatures />
     <HomeFeaturedProducts />
     <HomeCategories />
+    <HomeMedia />
   </div>
 </template>
 

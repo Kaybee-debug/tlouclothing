@@ -2,9 +2,18 @@
   <div class="p-8">
       <div class="mb-8 flex items-center justify-between">
         <div>
-          <h1 class="font-display text-3xl font-bold text-foreground mb-2">Products</h1>
-          <p class="text-muted-foreground">Manage your product catalog</p>
+          <h1 class="font-display text-3xl font-bold text-foreground mb-2">T.L.O.U. Products</h1>
+          <p class="text-muted-foreground">Manage hoodies, sweaters, trackpants, caps &amp; hats</p>
         </div>
+        <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          :disabled="syncing"
+          class="border border-primary text-primary hover:bg-primary/5 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+          @click="syncCatalog"
+        >
+          {{ syncing ? 'Syncing…' : 'Sync T.L.O.U. catalog' }}
+        </button>
         <button
           @click="showAddModal = true"
           class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -14,6 +23,7 @@
           </svg>
           Add Product
         </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -54,9 +64,9 @@
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3 min-w-0">
                   <img
-                    :src="product.image_url || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=600&fit=crop'"
+                    :src="product.image_url || productFallback"
                     :alt="product.name"
-                    class="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                    class="w-16 h-16 object-contain bg-gray-50 rounded-lg flex-shrink-0 border"
                   />
                   <div class="min-w-0 flex-1">
                     <div class="text-sm font-semibold text-gray-900 mb-1">{{ product.name }}</div>
@@ -72,7 +82,7 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-1">
-                  <span class="text-sm text-gray-900">{{ product.stock }} yards</span>
+                  <span class="text-sm text-gray-900">{{ product.stock }} in stock</span>
                   <span v-if="product.stock < 50" class="text-xs text-orange-600 font-medium">⚠ Low Stock</span>
                 </div>
               </td>
@@ -167,8 +177,7 @@
                     class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     <option value="">Select a category</option>
-                    <option v-if="categories.length === 0" disabled>Loading categories...</option>
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.name">
+                    <option v-for="cat in displayCategories" :key="cat.id" :value="cat.name">
                       {{ cat.name }}
                     </option>
                   </select>
@@ -208,7 +217,7 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Stock (yards)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stock (units)</label>
                 <input
                   v-model.number="productForm.stock"
                   type="number"
@@ -295,12 +304,38 @@ definePageMeta({
   layout: 'admin'
 })
 
+import { tlouCategoryNames, productImages, sortTlouCategories } from '~/data/tlou-products'
+
+const productFallback = productImages.fallback
 const auth = useAuth()
 const api = useApi()
 const products = ref([])
 const categories = ref([])
+
+/** Always include T.L.O.U. categories in admin dropdown */
+const displayCategories = computed(() => {
+  const names = new Set<string>([...tlouCategoryNames])
+  categories.value.forEach((c) => names.add(c.name))
+  return sortTlouCategories(names).map((name, i) => ({ id: `cat-${i}`, name }))
+})
 const loading = ref(true)
+const syncing = ref(false)
 const error = ref(null)
+
+const LEGACY_CATEGORIES = [
+  'Corporate Uniform',
+  'Protective Clothing',
+  'Hospitality Wear',
+  'Security Clothing',
+]
+
+function isLegacyCatalog(list) {
+  return list.some(
+    (p) =>
+      LEGACY_CATEGORIES.includes(p.category) ||
+      (p.image_url && !String(p.image_url).includes('tlou_'))
+  )
+}
 const showAddModal = ref(false)
 const editingProduct = ref(null)
 const saving = ref(false)
@@ -347,7 +382,11 @@ onMounted(async () => {
   // Wait a bit for auth to initialize
   await new Promise(resolve => setTimeout(resolve, 100))
   
-  await Promise.all([loadProducts(), loadCategories()])
+  await loadCategories()
+  await loadProducts()
+  if (products.value.length > 0 && isLegacyCatalog(products.value)) {
+    await syncCatalog(true)
+  }
 })
 
 const loadProducts = async () => {
@@ -357,9 +396,40 @@ const loadProducts = async () => {
     products.value = await api.getProducts()
   } catch (err) {
     console.error('Error loading products:', err)
-    error.value = 'Failed to load products. Please try again.'
+    error.value = 'Failed to load products. Is the backend running on port 3003?'
   } finally {
     loading.value = false
+  }
+}
+
+const syncCatalog = async (silent = false) => {
+  syncing.value = true
+  if (!silent) error.value = null
+  try {
+    const token = auth.token?.value || auth.token || (process.client ? localStorage.getItem('token') : null)
+    if (!token) throw new Error('Not logged in')
+
+    const config = useRuntimeConfig()
+    const response = await fetch(`${config.public.apiBase}/api/admin/sync-catalog`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Sync failed')
+    }
+
+    await loadProducts()
+    if (!silent) {
+      successMessage.value = 'T.L.O.U. catalog synced — old template products replaced.'
+      setTimeout(() => { successMessage.value = '' }, 5000)
+    }
+  } catch (err) {
+    console.error('Catalog sync error:', err)
+    if (!silent) error.value = err.message || 'Failed to sync catalog'
+  } finally {
+    syncing.value = false
   }
 }
 

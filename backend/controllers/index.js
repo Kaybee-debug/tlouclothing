@@ -15,7 +15,7 @@ const getProducts = async (req, res) => {
         p.created_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      ORDER BY p.created_at DESC
+      ORDER BY c.name ASC NULLS LAST, p.name ASC
     `);
 
     // Map the results to match frontend expectations

@@ -1,40 +1,37 @@
-# Xiselo Safety - Nuxt 3 E-commerce
+# tlouclothing
 
-Premium textile e-commerce application built with Nuxt 3.
+Nuxt 3 e-commerce site for **T.L.O.U. Clothing (The Last Of Us Clothing)** — streetwear in Tembisa.
 
-## Setup
+## Run locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
-## Project Structure
+Open http://localhost:3000
 
-- `pages/` - File-based routing (Nuxt automatically creates routes)
-- `components/` - Vue components
-- `composables/` - Reusable composables (useAuth, useCart, useApi)
-- `middleware/` - Route middleware (auth, admin)
-- `layouts/` - Layout components
-- `types/` - TypeScript type definitions
+## Business content
 
-## Features
+- **Location:** 933 Winnie Mandela, Zone 10, Tembisa, Gauteng 1632
+- **Phone/WhatsApp:** 079 943 4968
+- **Email:** tlou.masoga1@gmail.com
+- **Products:** Catalog in `data/tlou-products.ts` (6 items with prices)
 
-- Product catalog with detail pages
-- Shopping cart
-- User authentication
-- Admin dashboard (protected routes)
-- Responsive design with Tailwind CSS
+## Add your logos & media
 
-## API Configuration
+Copy your logo images into `public/`:
 
-Set `NUXT_PUBLIC_API_URL` environment variable or it defaults to `http://10.0.0.86:3003`
+- `public/logo.png` — main T.L.O.U. logo (navbar & hero)
+- `public/logo-badge.png` — circular badge (media gallery)
+
+Optional:
+
+- `public/media/welcome.mp3` — audio for the Media section
+- Set `NUXT_PUBLIC_VIDEO_EMBED_URL` to a YouTube embed URL for the video block
+
+## Project structure
+
+- `pages/` — Home, Shop, About, Contact, Cart
+- `components/` — Hero, features, catalog, media gallery
+- `data/tlou-products.ts` — Product catalog (assignment prices)

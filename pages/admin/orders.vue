@@ -2,7 +2,7 @@
   <div class="p-8">
     <div class="mb-8">
       <h1 class="font-display text-3xl font-bold text-foreground mb-2">Orders</h1>
-      <p class="text-muted-foreground">View and manage all customer orders</p>
+      <p class="text-muted-foreground">T.L.O.U. Clothing — customer orders &amp; EFT payments</p>
     </div>
 
     <!-- Loading State -->
@@ -71,7 +71,8 @@
                   @change="updateOrderStatus(order.id, order.status)"
                   class="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="pending">Pending</option>
+                  <option value="pending">Pending payment</option>
+                  <option value="paid">Payment confirmed</option>
                   <option value="processing">Processing</option>
                   <option value="shipped">Shipped</option>
                   <option value="delivered">Delivered</option>
@@ -259,6 +260,7 @@ const viewOrderDetails = (order) => {
 const getStatusClass = (status) => {
   const statusMap = {
     pending: 'bg-yellow-100 text-yellow-800',
+    paid: 'bg-green-100 text-green-800',
     processing: 'bg-blue-100 text-blue-800',
     shipped: 'bg-purple-100 text-purple-800',
     delivered: 'bg-green-100 text-green-800',

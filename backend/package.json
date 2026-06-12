@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "db:init": "node db/init.js",
     "db:setup": "node db/init.js",
+    "db:seed-tlou": "node db/seed-tlou-catalog.js",
     "db:demo-users": "node scripts/add-demo-users.js",
     "db:list-users": "node scripts/list-users.js"
   },
@@ -22,6 +23,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "nodemailer": "^8.0.11",
     "pg": "^8.16.3"
   },
   "devDependencies": {

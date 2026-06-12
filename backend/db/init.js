@@ -9,8 +9,19 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
+const { TLOU_CATEGORIES } = require('../data/tlou-catalog');
+const { seedTlouCatalog } = require('./seed-tlou-catalog');
+
 async function initDatabase() {
   try {
+    for (const name of TLOU_CATEGORIES) {
+      const existing = await pool.query('SELECT id FROM categories WHERE name = $1', [name]);
+      if (existing.rows.length === 0) {
+        await pool.query('INSERT INTO categories (name) VALUES ($1)', [name]);
+        console.log(`Category created: ${name}`);
+      }
+    }
+
     // Insert demo users (assuming table structure exists)
     const adminPassword = await bcrypt.hash('admin123', 10);
     const customerPassword = await bcrypt.hash('pass123', 10);
@@ -21,7 +32,7 @@ async function initDatabase() {
 
     if (existingAdmin.rows.length === 0) {
       await pool.query(
-        'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
         ['Admin User', 'admin@fabric.com', adminPassword, 'admin']
       );
       console.log('Admin user created');
@@ -29,12 +40,13 @@ async function initDatabase() {
 
     if (existingCustomer.rows.length === 0) {
       await pool.query(
-        'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
-        ['Customer User', 'molepok@mogaleintegrated.co.za', customerPassword, 'user']
+        'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
+        ['Customer User', 'molepok@mogaleintegrated.co.za', customerPassword, 'customer']
       );
       console.log('Customer user created');
     }
 
+    await seedTlouCatalog(pool);
     console.log('Database initialization completed');
   } catch (error) {
     console.error('Database initialization error:', error);

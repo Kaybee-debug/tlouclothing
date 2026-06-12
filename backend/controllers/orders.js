@@ -78,7 +78,7 @@ const createOrder = async (req, res) => {
     try {
       result = await pool.query(
         'INSERT INTO orders (user_id, items, total_amount, shipping_address, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [userId, JSON.stringify(items), total, shippingAddress ? JSON.stringify(shippingAddress) : null, 'paid']
+        [userId, JSON.stringify(items), total, shippingAddress ? JSON.stringify(shippingAddress) : null, 'pending']
       );
     } catch (insertError) {
       console.error('Insert error:', insertError.message);
@@ -87,7 +87,7 @@ const createOrder = async (req, res) => {
         console.log('Columns still missing, trying insert without items and shipping_address');
         result = await pool.query(
           'INSERT INTO orders (user_id, total_amount, status) VALUES ($1, $2, $3) RETURNING *',
-          [userId, total, 'paid']
+          [userId, total, 'pending']
         );
         // Add items to the result manually since we couldn't store it
         result.rows[0].items = JSON.stringify(items);

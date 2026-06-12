@@ -4,19 +4,26 @@ export const useApi = () => {
 
   const request = async (endpoint: string, options: RequestInit = {}) => {
     const url = `${apiBase}${endpoint}`
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`)
+    let response: Response
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      })
+    } catch {
+      throw new Error('Cannot reach the server. Start the backend with: npm run dev:backend')
     }
 
-    return response.json()
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(data.message || `API error: ${response.status}`)
+    }
+
+    return data
   }
 
   return {
@@ -29,10 +36,16 @@ export const useApi = () => {
         body: JSON.stringify({ email, password }),
       })
     },
-    async register(name: string, email: string, password: string) {
+    async sendVerificationCode(email: string) {
+      return request('/api/auth/send-verification-code', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+    },
+    async register(name: string, email: string, password: string, code: string) {
       return request('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, code }),
       })
     },
     async getMe(token: string) {

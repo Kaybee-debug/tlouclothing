@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { getProducts, getProduct } = require("../controllers");
-const { register, login, getCurrentUser } = require("../controllers/auth");
+const { sendVerificationCode, register, login, getCurrentUser } = require("../controllers/auth");
 const { createOrder, getUserOrders } = require("../controllers/orders");
-const { getDashboardStats, getAllOrders, updateOrderStatus, getCategories, createProduct, updateProduct, deleteProduct } = require("../controllers/admin");
+const { getDashboardStats, getAllOrders, updateOrderStatus, getCategories, syncCatalog, createProduct, updateProduct, deleteProduct } = require("../controllers/admin");
 const { upload, uploadImage } = require("../controllers/upload");
 
 const JWT_SECRET = process.env.JWT_SECRET || "xisekelo-safety-secret-key-change-in-production";
@@ -48,13 +48,14 @@ const verifyAdmin = (req, res, next) => {
 };
 
 router.get("/", (req, res) => {
-  res.send("Welcome to Xisekelo Safety Backend!");
+  res.send("Welcome to T.L.O.U. Clothing API");
 });
 
 router.get("/products", getProducts);
 router.get("/products/:id", getProduct);
 
 // Auth routes
+router.post("/auth/send-verification-code", sendVerificationCode);
 router.post("/auth/register", register);
 router.post("/auth/login", login);
 router.get("/auth/me", getCurrentUser);
@@ -68,6 +69,7 @@ router.get("/admin/stats", verifyAdmin, getDashboardStats);
 router.get("/admin/orders", verifyAdmin, getAllOrders);
 router.put("/admin/orders/:id", verifyAdmin, updateOrderStatus);
 router.get("/admin/categories", verifyAdmin, getCategories);
+router.post("/admin/sync-catalog", verifyAdmin, syncCatalog);
 router.post("/admin/products", verifyAdmin, createProduct);
 router.put("/admin/products/:id", verifyAdmin, updateProduct);
 router.delete("/admin/products/:id", verifyAdmin, deleteProduct);

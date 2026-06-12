@@ -20,15 +20,15 @@
             </div>
             <span 
               class="px-3 py-1 rounded-full text-sm font-medium"
-              :class="{
-                'bg-green-100 text-green-800': order.status === 'completed' || order.status === 'delivered',
-                'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                'bg-blue-100 text-blue-800': order.status === 'processing' || order.status === 'paid'
-              }"
+              :class="statusClass(order.status)"
             >
-              {{ order.status || 'pending' }}
+              {{ formatStatus(order.status) }}
             </span>
           </div>
+
+          <p v-if="order.status === 'pending'" class="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">
+            Payment pending — we will confirm your order after checking your EFT proof of payment.
+          </p>
           
           <div class="space-y-2 mb-4">
             <div 
@@ -113,6 +113,32 @@ onMounted(async () => {
     pending.value = false
   }
 })
+
+const formatStatus = (status) => {
+  const labels = {
+    pending: 'Pending payment',
+    paid: 'Payment confirmed',
+    processing: 'Processing',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  }
+  return labels[status] || 'Pending payment'
+}
+
+const statusClass = (status) => {
+  const classes = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    paid: 'bg-green-100 text-green-800',
+    processing: 'bg-blue-100 text-blue-800',
+    shipped: 'bg-purple-100 text-purple-800',
+    delivered: 'bg-green-100 text-green-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+  }
+  return classes[status] || 'bg-yellow-100 text-yellow-800'
+}
 
 const formatDate = (dateString) => {
   if (!dateString) return ''

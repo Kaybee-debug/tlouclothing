@@ -1,8 +1,8 @@
 <template>
   <div class="p-8">
       <div class="mb-8">
-        <h1 class="font-display text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p class="text-muted-foreground">Welcome back! Here's an overview of your store.</p>
+        <h1 class="font-display text-3xl font-bold text-foreground mb-2">T.L.O.U. Dashboard</h1>
+        <p class="text-muted-foreground">Streetwear catalog &amp; orders — Tembisa stall overview.</p>
       </div>
 
       <!-- Loading State -->
@@ -109,7 +109,7 @@
               class="flex items-center gap-3 p-3 border border-orange-200 bg-orange-50 rounded-lg"
             >
               <img
-                :src="product.image_url || 'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&h=600&fit=crop'"
+                :src="product.image_url || productFallback"
                 :alt="product.name"
                 class="w-12 h-12 object-cover rounded"
               />
@@ -129,11 +129,14 @@
 </template>
 
 <script setup>
+import { productImages } from '~/data/tlou-products'
+
 definePageMeta({
   middleware: 'admin',
   layout: 'admin'
 })
 
+const productFallback = productImages.fallback
 const auth = useAuth()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
